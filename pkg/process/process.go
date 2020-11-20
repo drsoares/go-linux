@@ -14,7 +14,7 @@ const (
 )
 
 type Process struct {
-	PID     uint64
+	PID     int
 	CmdLine string
 }
 
@@ -45,7 +45,7 @@ func findProc(filter func(*Process) bool) ([]*Process, error) {
 
 	var processes []*Process
 	for _, dirName := range dirNames {
-		pid, err := strconv.ParseUint(dirName, 10, 0)
+		pid, err := strconv.Atoi(dirName)
 		if err != nil {
 			// Not a number, so not a PID subdir.
 			continue
