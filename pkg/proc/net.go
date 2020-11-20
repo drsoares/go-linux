@@ -96,7 +96,9 @@ func extractTcpSockets(procDir string, filter func(*TcpSocket) bool) ([]*TcpSock
 			return nil, err
 		}
 		tcpSocket := &TcpSocket{local, remote, state}
-		tcpSockets = append(tcpSockets, tcpSocket)
+		if filter(tcpSocket) {
+			tcpSockets = append(tcpSockets, tcpSocket)
+		}
 	}
 
 	return tcpSockets, nil
