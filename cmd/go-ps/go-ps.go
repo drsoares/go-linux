@@ -17,12 +17,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	flag.Parse()
 	flag.StringVar(&pattern, "pattern", "", "filter processes by pattern")
+	flag.Parse()
 
 	var processes []*process.Process
 	var err error
-	if pattern != "" {
+
+	if pattern == "" {
 		processes, err = process.Processes()
 	} else {
 		processes, err = process.ProcessesByPattern(pattern)
