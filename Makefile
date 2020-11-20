@@ -10,6 +10,7 @@ format:
 
 build:
 	@echo ">> building binaries"
+	@$(GO) vet $(PKG)/...
 	@$(GO) build -mod=vendor $(PKG)/cmd/go-ps
 
 .PHONY: all format build

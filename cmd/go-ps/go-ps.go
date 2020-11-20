@@ -33,6 +33,6 @@ func main() {
 	}
 
 	for _, proc := range processes {
-		fmt.Println(fmt.Sprintf("PID: %s CmdLine: %s", proc.PID, proc.CmdLine))
+		fmt.Println(fmt.Sprintf("PID: %d CmdLine: %s", proc.PID, proc.CmdLine))
 	}
 }
