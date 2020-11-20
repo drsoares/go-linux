@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/drsoares/go-linux/pkg/process"
+	"github.com/drsoares/go-linux/pkg/proc"
 	"os"
 	"runtime"
 )
@@ -20,13 +20,13 @@ func main() {
 	flag.StringVar(&pattern, "pattern", "", "filter processes by pattern")
 	flag.Parse()
 
-	var processes []*process.Process
+	var processes []*proc.Process
 	var err error
 
 	if pattern == "" {
-		processes, err = process.Processes()
+		processes, err = proc.Processes()
 	} else {
-		processes, err = process.ProcessesByPattern(pattern)
+		processes, err = proc.ProcessesByPattern(pattern)
 	}
 	if err != nil {
 		fmt.Println(err.Error())

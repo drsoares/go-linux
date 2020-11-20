@@ -12,5 +12,6 @@ build:
 	@echo ">> building binaries"
 	@$(GO) vet $(PKG)/...
 	@$(GO) build -mod=vendor $(PKG)/cmd/go-ps
+	@$(GO) build -mod=vendor $(PKG)/cmd/go-socket
 
 .PHONY: all format build

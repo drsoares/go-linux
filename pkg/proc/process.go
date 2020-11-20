@@ -1,16 +1,10 @@
-package process
+package proc
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
-	"strings"
-)
-
-const (
-	root = "/proc"
 )
 
 type Process struct {
@@ -51,19 +45,17 @@ func findProc(filter func(*Process) bool) ([]*Process, error) {
 			continue
 		}
 
-		fdBase := filepath.Join(root, dirName, "fd")
-		dfh, err := os.Open(fdBase)
+		procDir := filepath.Join(root, dirName)
+		err = checkIfProcExists(procDir)
 		if err != nil {
 			// Process is be gone by now, or we don't have access.
 			continue
 		}
-		dfh.Close()
 
-		cmd, err := ioutil.ReadFile(filepath.Join(root, dirName, "/cmdline"))
+		cmdLine, err := extractCmdLine(procDir)
 		if err != nil {
 			continue
 		}
-		cmdLine := extractCmdLine(cmd)
 
 		p := &Process{PID: pid, CmdLine: cmdLine}
 		if filter(p) {
@@ -71,20 +63,4 @@ func findProc(filter func(*Process) bool) ([]*Process, error) {
 		}
 	}
 	return processes, nil
-}
-
-func extractCmdLine(content []byte) string {
-	c := 0 // cursor of useful bytes
-
-	for i := 0; i < len(content)-1; i++ {
-		// Check if next byte is not a '\0' byte.
-		if content[i+1] != byte(0) {
-			// Offset must match a '\0' byte.
-			c = i + 2
-			if content[i] == 0 {
-				content[i] = byte(0x20)
-			}
-		}
-	}
-	return strings.TrimSpace(string(content[0:c]))
 }
