@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/drsoares/go-ps/process"
+	"github.com/drsoares/go-linux/process"
 	"os"
 	"runtime"
 )
