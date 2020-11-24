@@ -40,6 +40,17 @@ type TcpSocket struct {
 	LocalAddress  *Address
 	RemoteAddress *Address
 	State         SocketState
+	Inode         string
+}
+
+func Sockets() ([]*TcpSocket, error) {
+	tcpSockets, err := extractTcpSockets(func(s *TcpSocket) bool {
+		return true
+	})
+	if err != nil {
+		return nil, err
+	}
+	return tcpSockets, nil
 }
 
 func SocketsByPID(pid string) ([]*TcpSocket, error) {
@@ -52,8 +63,8 @@ func SocketsByPID(pid string) ([]*TcpSocket, error) {
 	if err != nil {
 		return nil, err
 	}
-	tcpSockets, err := extractTcpSockets(socketInodes, func(socket *TcpSocket) bool {
-		return true
+	tcpSockets, err := extractTcpSockets(func(s *TcpSocket) bool {
+		return contains(socketInodes, s.Inode)
 	})
 	if err != nil {
 		return nil, err
@@ -71,8 +82,8 @@ func SocketsByPIDAndState(pid string, state SocketState) ([]*TcpSocket, error) {
 	if err != nil {
 		return nil, err
 	}
-	tcpSockets, err := extractTcpSockets(socketInodes, func(s *TcpSocket) bool {
-		return s.State == state
+	tcpSockets, err := extractTcpSockets(func(s *TcpSocket) bool {
+		return s.State == state && contains(socketInodes, s.Inode)
 	})
 	if err != nil {
 		return nil, err
@@ -110,7 +121,7 @@ func extractSocketInode(link string) string {
 	return pattern.FindAllStringSubmatch(link, -1)[0][1]
 }
 
-func extractTcpSockets(inodes []string, filter func(*TcpSocket) bool) ([]*TcpSocket, error) {
+func extractTcpSockets(filter func(*TcpSocket) bool) ([]*TcpSocket, error) {
 	file, err := os.Open(filepath.Join(root, netTcp))
 	if err != nil {
 		return nil, err
@@ -138,10 +149,7 @@ func extractTcpSockets(inodes []string, filter func(*TcpSocket) bool) ([]*TcpSoc
 			return nil, err
 		}
 		inode := parts[9]
-		if !contains(inodes, inode) {
-			continue
-		}
-		tcpSocket := &TcpSocket{local, remote, state}
+		tcpSocket := &TcpSocket{local, remote, state, inode}
 		if filter(tcpSocket) {
 			tcpSockets = append(tcpSockets, tcpSocket)
 		}

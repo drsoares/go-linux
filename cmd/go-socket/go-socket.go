@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"github.com/drsoares/go-linux/pkg/proc"
@@ -42,7 +41,7 @@ func main() {
 	if pid != "" {
 		sockets, err = proc.SocketsByPID(pid)
 	} else {
-		err = errors.New("not implemented yet")
+		sockets, err = proc.Sockets()
 	}
 	if err != nil {
 		fmt.Println(err.Error())
