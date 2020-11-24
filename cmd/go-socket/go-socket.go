@@ -30,9 +30,9 @@ func main() {
 	}
 
 	var pid string
-	//var state proc.SocketState
+	//var state string
 	flag.StringVar(&pid, "pid", "", "sockets by pid")
-	//flag.UintVar(&state, "state", -1)
+	//flag.StringVar(&state, "state", "", "socket state")
 	flag.Parse()
 
 	var sockets []*proc.TcpSocket
