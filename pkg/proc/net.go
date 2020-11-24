@@ -4,9 +4,11 @@ import (
 	"bufio"
 	"encoding/binary"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -27,6 +29,8 @@ const (
 	Closing                 = 0x0b
 )
 
+var pattern = regexp.MustCompile(`socket:\[(?P<inode>[0-9]+)\]`)
+
 type Address struct {
 	IP   net.IP
 	Port int
@@ -44,7 +48,11 @@ func SocketsByPID(pid string) ([]*TcpSocket, error) {
 	if err != nil {
 		return nil, err
 	}
-	tcpSockets, err := extractTcpSockets(procDir, func(socket *TcpSocket) bool {
+	socketInodes, err := extractProcSocketInodes(pid)
+	if err != nil {
+		return nil, err
+	}
+	tcpSockets, err := extractTcpSockets(socketInodes, func(socket *TcpSocket) bool {
 		return true
 	})
 	if err != nil {
@@ -59,7 +67,11 @@ func SocketsByPIDAndState(pid string, state SocketState) ([]*TcpSocket, error) {
 	if err != nil {
 		return nil, err
 	}
-	tcpSockets, err := extractTcpSockets(procDir, func(s *TcpSocket) bool {
+	socketInodes, err := extractProcSocketInodes(pid)
+	if err != nil {
+		return nil, err
+	}
+	tcpSockets, err := extractTcpSockets(socketInodes, func(s *TcpSocket) bool {
 		return s.State == state
 	})
 	if err != nil {
@@ -68,8 +80,38 @@ func SocketsByPIDAndState(pid string, state SocketState) ([]*TcpSocket, error) {
 	return tcpSockets, nil
 }
 
-func extractTcpSockets(procDir string, filter func(*TcpSocket) bool) ([]*TcpSocket, error) {
-	file, err := os.Open(filepath.Join(procDir, netTcp))
+func extractProcSocketInodes(pid string) ([]string, error) {
+	procPidPath := filepath.Join(root, pid, fd)
+	files, err := ioutil.ReadDir(procPidPath)
+	if err != nil {
+		return nil, err
+	}
+	var socketInodes []string
+	for _, f := range files {
+		if f.IsDir() {
+			continue
+		}
+		link, err := os.Readlink(filepath.Join(procPidPath, f.Name()))
+		if err != nil {
+			return nil, err
+		}
+		if isLinkToSocket(link) {
+			socketInodes = append(socketInodes, extractSocketInode(link))
+		}
+	}
+	return socketInodes, nil
+}
+
+func isLinkToSocket(link string) bool {
+	return strings.Contains(link, "socket")
+}
+
+func extractSocketInode(link string) string {
+	return pattern.FindAllStringSubmatch(link, -1)[0][1]
+}
+
+func extractTcpSockets(inodes []string, filter func(*TcpSocket) bool) ([]*TcpSocket, error) {
+	file, err := os.Open(filepath.Join(root, netTcp))
 	if err != nil {
 		return nil, err
 	}
@@ -94,6 +136,10 @@ func extractTcpSockets(procDir string, filter func(*TcpSocket) bool) ([]*TcpSock
 		state, err := parseState(parts[3])
 		if err != nil {
 			return nil, err
+		}
+		inode := parts[9]
+		if !contains(inodes, inode) {
+			continue
 		}
 		tcpSocket := &TcpSocket{local, remote, state}
 		if filter(tcpSocket) {

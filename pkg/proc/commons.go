@@ -21,3 +21,12 @@ func checkIfProcExists(procDir string) error {
 	dfh.Close()
 	return nil
 }
+
+func contains(slice []string, elem string) bool {
+	for _, i := range slice {
+		if i == elem {
+			return true
+		}
+	}
+	return false
+}

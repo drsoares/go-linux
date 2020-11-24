@@ -9,6 +9,20 @@ import (
 	"runtime"
 )
 
+var states = map[string]proc.SocketState{
+	"established": proc.Established,
+	"sync_sent":   proc.SynSent,
+	"sync_recv":   proc.SynRecv,
+	"fin_wait1":   proc.FinWait1,
+	"fin_wait2":   proc.FinWait2,
+	"time_wait":   proc.TimeWait,
+	"close":       proc.Close,
+	"close_wait":  proc.CloseWait,
+	"last_ack":    proc.LastAck,
+	"listen":      proc.Listen,
+	"closing":     proc.Closing,
+}
+
 func main() {
 	goos := runtime.GOOS
 	if goos != "linux" {
@@ -17,7 +31,9 @@ func main() {
 	}
 
 	var pid string
+	//var state proc.SocketState
 	flag.StringVar(&pid, "pid", "", "sockets by pid")
+	//flag.UintVar(&state, "state", -1)
 	flag.Parse()
 
 	var sockets []*proc.TcpSocket
